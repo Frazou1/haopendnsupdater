@@ -14,16 +14,6 @@ def get_public_ip():
         print(f"Erreur lors de la récupération de l'IP publique : {e}")
         return None
 
-def update_ha_sensor(status, last_update):
-    """Met à jour le sensor dans Home Assistant via un fichier JSON."""
-    sensor_data = {
-        "status": status,
-        "last_update": last_update
-    }
-    # Écriture des données dans le fichier de statut
-    with open('/data/sensor_status.json', 'w') as f:
-        json.dump(sensor_data, f)
-    print(f"Statut du capteur mis à jour : {sensor_data}")
 
 def update_opendns(username, password, network_label, ip):
     """Met à jour l'adresse IP sur OpenDNS."""
@@ -32,16 +22,10 @@ def update_opendns(username, password, network_label, ip):
         response = requests.get(url, auth=(username, password))
         response.raise_for_status()
         print(f"Réponse d'OpenDNS : {response.text}")
-        update_ha_sensor(
-            status="success",
-            last_update=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
+
     except requests.RequestException as e:
         print(f"Erreur lors de la mise à jour sur OpenDNS : {e}")
-        update_ha_sensor(
-            status="failure",
-            last_update=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
+
 
 def main():
     """Point d'entrée principal du script."""
