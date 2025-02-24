@@ -22,6 +22,7 @@ schema:
   password: "str"
   network_label: "str"
   check_interval: "int"
+  status_sensor: bool
 build:
   builder: docker
   file: Dockerfile
