@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: HA OpenDNS Updater
-version: "1.1.1"
+version: "1.1.2"
 slug: example
 description: HA OpenDNS Updater Add-on
 url: "https://github.com/Frazou1/haopendnsupdater"
@@ -22,7 +22,6 @@ schema:
   password: "str"
   network_label: "str"
   check_interval: "int"
-  status_sensor: bool
 build:
   builder: docker
   file: Dockerfile
