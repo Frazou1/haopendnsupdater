@@ -1,9 +1,9 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
-name: Ville Quebec Collecte Add-on
+name: HA OpenDNS Updater
 version: "1.3.0"
 slug: example
-description: Ville Quebec Collecte Add-on
-url: "https://github.com/Frazou1/ville_qc_collecte"
+description: HA OpenDNS Updater Add-on
+url: "https://github.com/Frazou1/haopendnsupdater"
 arch:
   - armhf
   - armv7
@@ -11,29 +11,17 @@ arch:
   - amd64
   - i386
 init: false
-map:
-  - share:rw
+boot: "auto"
 options:
-  address: "123 des tulippes"
-  update_interval: 3600
-  mqtt_host: "core-mosquitto"
-  mqtt_port: 1883
-  mqtt_username: ""
-  mqtt_password: ""
-  # Options pour l'intégration Home Assistant
-  ha_url: "http://homeassistant.local:8123"
-  ha_token: ""            # Remplis avec ton jeton d'accès à long terme
-  ha_calendar_entity: "calendar.mon_calendrier"  # Entité du calendrier dans HA
+  username: "votre_utilisateur_opendns"
+  password: "votre_mot_de_passe_opendns"
+  network_label: "votre_label_reseau"
+  check_interval: 300
 schema:
-  address: str
-  update_interval: int
-  mqtt_host: str
-  mqtt_port: int
-  mqtt_username: str
-  mqtt_password: str
-  ha_url: str
-  ha_token: str
-  ha_calendar_entity: str
+  username: "str"
+  password: "str"
+  network_label: "str"
+  check_interval: "int"
 build:
   builder: docker
   file: Dockerfile
