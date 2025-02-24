@@ -13,7 +13,7 @@ echo "[INFO] Démarrage de l'add-on HA OpenDNS Updater"
 
 while true; do
     echo "Vérification de l'adresse IP publique..."
-    python3 /script.py "$USERNAME" "$PASSWORD" "$NETWORK_LABEL"
+    python3 /script.py "$USERNAME" "$PASSWORD" "$NETWORK_LABEL" 
     
     echo "Attente de $INTERVAL secondes avant la prochaine vérification."
     sleep $INTERVAL
