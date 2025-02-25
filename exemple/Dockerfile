@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Installer les packages Python nécessaires (ajout de "requests")
-RUN pip install requests
+RUN pip install requests paho-mqtt==1.6.1
 
 COPY run.sh /run.sh
 COPY script.py /script.py
