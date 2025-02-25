@@ -1,22 +1,18 @@
 # HA OpenDNS Updater
 
-**Ville_qc_collecte** is a Home Assistant add-on that scrapes the [Ville de Québec Info-Collecte website](https://www.ville.quebec.qc.ca/services/info-collecte/) (using Selenium) to determine the next garbage (ordures/résidus alimentaires) and recycling (recyclage) collection dates. The add-on then publishes these dates as MQTT sensors, making them available in Home Assistant.
+**HA OpenDNS Updater** HA OpenDNS Updater is an add-on for Home Assistant that automatically updates your public IP address on OpenDNS to keep your network filtering settings up to date. It uses MQTT to publish the update status (valid or invalid) and the date of the last update using MQTT Discovery, allowing Home Assistant to automatically detect the sensor. 
+**New features:**  
+-   Updates your public IP address on OpenDNS.
+-   Publishes the status (valid or invalid) via MQTT.
+-   Includes a last_update attribute to display the date of the last update.
+-   Uses MQTT Discovery for automatic integration into Home Assistant.
 
 ---
 
-## How it works
-
-1. **Headless browser (Selenium):**  
-   The add-on launches a headless Chromium browser to load the Ville de Québec Info-Collecte page and automatically enters your address.
-2. **HTML parsing (BeautifulSoup):**  
-   Once the calendar is displayed, the add-on parses the HTML to find upcoming pickup dates for ordures/résidus alimentaires and recyclage.
-3. **MQTT sensor publishing:**  
-   Using **MQTT Discovery**, the add-on publishes states and attributes for two sensors: 
-   - `sensor.collecte_ordures`  
-   - `sensor.collecte_recyclage`  
-   so Home Assistant can automatically detect and display them.
-
----
+## Prerequisites
+-   Home Assistant installed with the MQTT broker configured.
+-   An OpenDNS account with a network label configured.
+-   Access to your Home Assistant instance via Supervisor to install the add-on.
 
 ## Installation
 
@@ -24,25 +20,67 @@
    - Go to **Settings** → **Add-ons** → **Add-on Store** → the three dots menu (**⋮**) → **Repositories** → enter this repo's URL.  
    - Or click the button below:
 
-   [![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Faddons-example)
-2. **Install** the add-on named **Ville_qc_collecte** from your local add-ons list.
-3. **Configure** the add-on (address to search, update interval, MQTT settings, etc.).
-4. **Start** the add-on and check the logs. You should see it fetching the Info-Collecte calendar and publishing sensor data via MQTT.
+   [![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FFrazou1%2Fhaopendnsupdater)
+
+2. **Install** the add-on named **HA OpenDNS Updater** from your local add-ons list.
+3. **Configure** the add-on with the following options:
+   - **Username:** The username of opendns account.
+   - **Password:** The password of opendns account.
+   - **Network_label:** The network label of opendns account.
+   - **Update interval:** How frequently (in seconds) the site is re-checked.
+   - **MQTT settings:** MQTT host, port, username, and password.
+
+4. **Start** the add-on and check the logs. You should see  publishing MQTT sensor data, and (if configured) creating sensor in HA.
 
 ---
 
 ## Configuration Options
 
-| Key              | Description                                                    | Default                    |
-|------------------|----------------------------------------------------------------|----------------------------|
-| `address`        | The address to look up                                        | `"123 rue des tulippes"` |
-| `update_interval`| How frequently (in seconds) to re-check the Info-Collecte site | `3600` (1 hour)            |
-| `mqtt_host`      | The MQTT broker hostname                                      | `"core-mosquitto"`         |
-| `mqtt_port`      | The MQTT broker port                                          | `1883`                     |
-| `mqtt_username`  | Username for MQTT (if any)                                    | `""`                       |
-| `mqtt_password`  | Password for MQTT (if any)                                    | `""`                       |
+| Key                  | Description                                                                                      | Default                         |
+|----------------------|--------------------------------------------------------------------------------------------------|---------------------------------|
+| `username`           | The username of opendns account.                                                                 | `"aaa@bbb.com"`                 |
+| `password`           | The password of opendns account.                                                                 | `password`                      |
+| `network_label       | The network label of opendns account.                                                            | `home_lan`                      |
+| `check_interval      | How frequently (in seconds) to re-check                                                          | `300"` 5min                     |
+| `mqtt_host`          | The MQTT broker hostname                                                                         | `"core-mosquitto"`              |
+| `mqtt_port`          | The MQTT broker port                                                                             | `1883`                          |
+| `mqtt_username`      | Username for MQTT (if any)                                                                       | `""`                            |
+| `mqtt_password`      | Password for MQTT (if any)                                                                       | `""`                            |
+
 
 ---
+
+## Automation Example
+
+```yaml
+alias: Notification OpenDNS invalide
+description: "Envoie une notification si le statut OpenDNS est invalide"
+trigger:
+  - platform: state
+    entity_id: sensor.opendns_status
+    to: "invalide"
+condition: []
+action:
+  - service: notify.mobile_app_votre_telephone
+    data:
+      title: "OpenDNS - Mise à jour échouée"
+      message: >
+        La mise à jour de l'IP publique sur OpenDNS a échoué. 
+        Vérifiez vos identifiants ou votre connexion internet.
+      data:
+        actions:
+          - action: "URI"
+            title: "Vérifier OpenDNS"
+            uri: "https://dashboard.opendns.com/"
+  - service: notify.persistent_notification.create
+    data:
+      title: "OpenDNS Status"
+      message: "La mise à jour OpenDNS a échoué. Vérifiez l'add-on."
+mode: single
+
+```
+
+
 
 ## Architectures
 
