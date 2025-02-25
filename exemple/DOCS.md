@@ -53,30 +53,33 @@
 ## Automation Example
 
 ```yaml
-alias: Notification OpenDNS invalide
-description: "Envoie une notification si le statut OpenDNS est invalide"
-trigger:
-  - platform: state
-    entity_id: sensor.opendns_status
-    to: "invalide"
-condition: []
-action:
-  - service: notify.mobile_app_votre_telephone
+alias: Notification OpenDns Updater à échoué
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.opendns_updater_opendns_status
+    to: invalide
+conditions: []
+actions:
+  - action: notify.mobile_app_iphone
+    metadata: {}
     data:
-      title: "OpenDNS - Mise à jour échouée"
-      message: >
-        La mise à jour de l'IP publique sur OpenDNS a échoué. 
-        Vérifiez vos identifiants ou votre connexion internet.
+      title: OpenDNS - Mise à jour échouée
+      message: >-
+        La mise à jour de l'IP publique sur OpenDNS a échoué. Vérifiez vos identifiants ou votre connexion internet.
       data:
         actions:
           - action: "URI"
             title: "Vérifier OpenDNS"
-            uri: "https://dashboard.opendns.com/"
-  - service: notify.persistent_notification.create
+            uri: "https://dashboard.opendns.com/" 
+  - action: persistent_notification.create
+    metadata: {}
     data:
-      title: "OpenDNS Status"
-      message: "La mise à jour OpenDNS a échoué. Vérifiez l'add-on."
+      title: OpenDNS Status
+      message: La mise à jour OpenDNS a échoué. Vérifiez l'add-on.
 mode: single
+
 
 ```
 
