@@ -29,7 +29,7 @@ schema:
   mqtt_host": "str",
   mqtt_port": "int",
   mqtt_username": "str",
-  mqtt_password": "password",
+  mqtt_password": "password"
 build:
   builder: docker
   file: Dockerfile
