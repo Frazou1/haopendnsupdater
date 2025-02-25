@@ -4,6 +4,11 @@ import requests
 import sys
 import paho.mqtt.client as mqtt
 
+# Configuration des topics
+DISCOVERY_TOPIC = "homeassistant/sensor/opendns_updater/config"
+STATE_TOPIC = "homeassistant/sensor/opendns_updater/state"
+ATTR_TOPIC = "homeassistant/sensor/opendns_updater/attributes"
+
 # Obtenir l'adresse IP publique
 def get_public_ip():
     try:
@@ -29,7 +34,26 @@ def update_opendns(username, password, network_label, ip):
         print(f"Erreur lors de la mise à jour sur OpenDNS : {e}")
         return False
 
-# Publication MQTT
+# Publication du sensor via MQTT Discovery
+def publish_mqtt_discovery(client):
+    discovery_payload = {
+        "name": "OpenDNS Status",
+        "state_topic": STATE_TOPIC,
+        "json_attributes_topic": ATTR_TOPIC,
+        "value_template": "{{ value }}",
+        "icon": "mdi:cloud-check",
+        "unique_id": "opendns_updater",
+        "device": {
+            "identifiers": ["opendns_updater"],
+            "name": "OpenDNS Updater",
+            "model": "HA OpenDNS Updater",
+            "manufacturer": "Custom"
+        }
+    }
+    client.publish(DISCOVERY_TOPIC, json.dumps(discovery_payload), retain=True)
+    print("MQTT Discovery publié avec succès.")
+
+# Publication MQTT du statut et des attributs
 def publish_mqtt(mqtt_host, mqtt_port, mqtt_username, mqtt_password, status, last_update):
     client = mqtt.Client("opendns_updater")
     client.username_pw_set(mqtt_username, mqtt_password)
@@ -38,14 +62,17 @@ def publish_mqtt(mqtt_host, mqtt_port, mqtt_username, mqtt_password, status, las
         client.connect(mqtt_host, int(mqtt_port), 60)
         client.loop_start()
 
+        # Publier via MQTT Discovery
+        publish_mqtt_discovery(client)
+
         # Publier le statut du sensor
-        client.publish("homeassistant/sensor/opendns_updater/state", status, retain=True)
+        client.publish(STATE_TOPIC, status, retain=True)
 
         # Publier l'attribut de date de mise à jour
         attributes = {
             "last_update": last_update
         }
-        client.publish("homeassistant/sensor/opendns_updater/attributes", json.dumps(attributes), retain=True)
+        client.publish(ATTR_TOPIC, json.dumps(attributes), retain=True)
         
         client.loop_stop()
         client.disconnect()
