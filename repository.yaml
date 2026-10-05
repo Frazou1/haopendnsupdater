@@ -1,4 +1,4 @@
 # https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
-name: HA OpenDNS Uddater
+name: HA OpenDNS Updater
 url: 'https://github.com/Frazou1/haopendnsupdater'
 maintainer: Frazou1

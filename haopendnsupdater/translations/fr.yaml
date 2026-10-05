@@ -1,0 +1,25 @@
+configuration:
+  username:
+    name: Utilisateur OpenDNS
+    description: Adresse courriel de votre compte OpenDNS.
+  password:
+    name: Mot de passe OpenDNS
+    description: Mot de passe de votre compte OpenDNS.
+  network_label:
+    name: Libellé du réseau
+    description: Libellé du réseau à mettre à jour, tel qu'affiché dans le tableau de bord OpenDNS.
+  check_interval:
+    name: Intervalle de vérification
+    description: Secondes entre deux vérifications de l'IP publique (minimum 60). OpenDNS n'est contacté que si l'IP change, ou une fois par jour.
+  mqtt_host:
+    name: Hôte MQTT
+    description: Nom d'hôte du broker MQTT. Utilisez core-mosquitto pour l'add-on Mosquitto.
+  mqtt_port:
+    name: Port MQTT
+    description: Port du broker MQTT.
+  mqtt_username:
+    name: Utilisateur MQTT
+    description: Laisser vide si le broker ne demande pas d'authentification.
+  mqtt_password:
+    name: Mot de passe MQTT
+    description: Laisser vide si le broker ne demande pas d'authentification.
