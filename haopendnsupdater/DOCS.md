@@ -42,10 +42,30 @@ The state values stay in French for compatibility with existing automations.
 
 | Attribute | Description |
 |---|---|
+| `message` | Plain-English explanation of the last result |
+| `message_fr` | Same explanation, in French |
 | `public_ip` | Public IP sent to OpenDNS |
 | `opendns_response` | Raw OpenDNS answer (`good`, `nochg`, `badauth`, `nohost`…) |
 | `last_update` | Date of the last OpenDNS update |
 | `last_check` | Date of the last public IP check |
+
+### Logs
+
+Each check writes a clear message, in English then French:
+
+```
+OK [valide] Public IP updated on OpenDNS. (OpenDNS: good 1.2.3.4)
+ERROR [invalide] Wrong OpenDNS username or password. Check the add-on configuration. (OpenDNS: badauth)
+```
+
+| OpenDNS answer | Meaning / what to do |
+|---|---|
+| `good`, `nochg` | Everything is fine |
+| `badauth` | Wrong username or password |
+| `nohost`, `notfqdn` | `network_label` does not match a network of the account (case-sensitive) |
+| `!yours` | The network belongs to another account |
+| `abuse` | Too many requests: wait, then restart the add-on |
+| `dnserr`, `911` | OpenDNS server error, retried automatically |
 
 ### Automation example
 
@@ -59,10 +79,7 @@ actions:
   - action: persistent_notification.create
     data:
       title: OpenDNS
-      message: >-
-        The OpenDNS public IP update failed
-        ({{ state_attr('sensor.opendns_updater_opendns_status', 'opendns_response') }}).
-        Check your credentials and the add-on logs.
+      message: "{{ state_attr('sensor.opendns_updater_opendns_status', 'message') }}"
 mode: single
 ```
 
@@ -104,10 +121,30 @@ OpenDNS n'est contacté que si l'IP publique change, plus une fois par jour par 
 
 | Attribut | Description |
 |---|---|
+| `message` | Explication claire du dernier résultat, en anglais |
+| `message_fr` | Même explication, en français |
 | `public_ip` | IP publique envoyée à OpenDNS |
 | `opendns_response` | Réponse brute d'OpenDNS (`good`, `nochg`, `badauth`, `nohost`…) |
 | `last_update` | Date de la dernière mise à jour OpenDNS |
 | `last_check` | Date de la dernière vérification de l'IP publique |
+
+### Journal
+
+Chaque vérification écrit un message clair, en anglais puis en français :
+
+```
+OK [valide] IP publique mise à jour sur OpenDNS. (OpenDNS : good 1.2.3.4)
+ERROR [invalide] Utilisateur ou mot de passe OpenDNS incorrect. Vérifiez la configuration de l'add-on. (OpenDNS : badauth)
+```
+
+| Réponse OpenDNS | Signification / quoi faire |
+|---|---|
+| `good`, `nochg` | Tout va bien |
+| `badauth` | Utilisateur ou mot de passe incorrect |
+| `nohost`, `notfqdn` | `network_label` ne correspond à aucun réseau du compte (majuscules comprises) |
+| `!yours` | Le réseau appartient à un autre compte |
+| `abuse` | Trop de requêtes : attendre, puis redémarrer l'add-on |
+| `dnserr`, `911` | Erreur du serveur OpenDNS, nouvel essai automatique |
 
 ### Exemple d'automatisation
 
@@ -121,9 +158,6 @@ actions:
   - action: persistent_notification.create
     data:
       title: OpenDNS
-      message: >-
-        La mise à jour de l'IP publique sur OpenDNS a échoué
-        ({{ state_attr('sensor.opendns_updater_opendns_status', 'opendns_response') }}).
-        Vérifiez vos identifiants et le journal de l'add-on.
+      message: "{{ state_attr('sensor.opendns_updater_opendns_status', 'message_fr') }}"
 mode: single
 ```

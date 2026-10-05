@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 1.2.1
+
+- Clear log messages explaining each result and what to do (English and French) / Messages clairs dans le journal, expliquant chaque résultat et quoi faire (anglais et français)
+- New sensor attributes `message` and `message_fr`, usable in notifications / Nouveaux attributs `message` et `message_fr`, utilisables dans les notifications
+- Fix: a wrong password (HTTP 401) is now reported as `badauth` instead of a generic network error / Correction : un mauvais mot de passe (HTTP 401) est maintenant signalé comme `badauth` au lieu d'une erreur réseau générique
+
 ## 1.2.0
 
 - The OpenDNS password is now hidden in the configuration screen / Le mot de passe OpenDNS est maintenant masqué dans l'écran de configuration
