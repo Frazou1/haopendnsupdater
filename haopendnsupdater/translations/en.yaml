@@ -1,0 +1,25 @@
+configuration:
+  username:
+    name: OpenDNS username
+    description: Email address of your OpenDNS account.
+  password:
+    name: OpenDNS password
+    description: Password of your OpenDNS account.
+  network_label:
+    name: Network label
+    description: Label of the network to update, as shown in the OpenDNS dashboard.
+  check_interval:
+    name: Check interval
+    description: Seconds between public IP checks (minimum 60). OpenDNS is only contacted when the IP changes, or once a day.
+  mqtt_host:
+    name: MQTT host
+    description: MQTT broker hostname. Use core-mosquitto for the Mosquitto add-on.
+  mqtt_port:
+    name: MQTT port
+    description: MQTT broker port.
+  mqtt_username:
+    name: MQTT username
+    description: Leave empty if the broker does not require authentication.
+  mqtt_password:
+    name: MQTT password
+    description: Leave empty if the broker does not require authentication.

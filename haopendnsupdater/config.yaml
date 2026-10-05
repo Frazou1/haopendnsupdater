@@ -1,0 +1,31 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: "HA OpenDNS Updater"
+version: "1.2.0"
+slug: "haopendnsupdater"
+description: "Keeps your OpenDNS network's public IP up to date / Garde l'IP publique de votre réseau OpenDNS à jour"
+url: "https://github.com/Frazou1/haopendnsupdater"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+options:
+  username: ""
+  password: ""
+  network_label: ""
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
+  check_interval: 300
+schema:
+  username: str
+  password: password
+  network_label: str
+  check_interval: int(60,)
+  mqtt_host: str
+  mqtt_port: port
+  mqtt_username: str?
+  mqtt_password: password?
