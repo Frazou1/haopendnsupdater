@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: "HA OpenDNS Updater"
-version: "1.2.0"
+version: "1.2.1"
 slug: "haopendnsupdater"
 description: "Keeps your OpenDNS network's public IP up to date / Garde l'IP publique de votre réseau OpenDNS à jour"
 url: "https://github.com/Frazou1/haopendnsupdater"

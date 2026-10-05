@@ -31,6 +31,33 @@ FORCE_UPDATE_SECONDS = 24 * 3600
 STATUS_OK = "valide"
 STATUS_FAILED = "invalide"
 
+# Explication des codes de réponse OpenDNS (protocole DynDNS) : (anglais, français)
+# OpenDNS response codes explained (DynDNS protocol): (English, French)
+OPENDNS_MESSAGES = {
+    "good": ("Public IP updated on OpenDNS.",
+             "IP publique mise à jour sur OpenDNS."),
+    "nochg": ("OpenDNS already had this IP, nothing to change.",
+              "OpenDNS avait déjà cette IP, rien à changer."),
+    "badauth": ("Wrong OpenDNS username or password. Check the add-on configuration.",
+                "Utilisateur ou mot de passe OpenDNS incorrect. Vérifiez la configuration de l'add-on."),
+    "nohost": ("Network label not found in this OpenDNS account. Check network_label (case-sensitive) in the OpenDNS dashboard.",
+               "Libellé de réseau introuvable dans ce compte OpenDNS. Vérifiez network_label (majuscules comprises) dans le tableau de bord OpenDNS."),
+    "notfqdn": ("Invalid network label. Check network_label.",
+                "Libellé de réseau invalide. Vérifiez network_label."),
+    "!yours": ("This network belongs to another OpenDNS account.",
+               "Ce réseau appartient à un autre compte OpenDNS."),
+    "numhost": ("Too many networks match this label in the OpenDNS account.",
+                "Trop de réseaux correspondent à ce libellé dans le compte OpenDNS."),
+    "abuse": ("Updates blocked by OpenDNS (too many requests). Wait, then restart the add-on.",
+              "Mises à jour bloquées par OpenDNS (trop de requêtes). Attendez, puis redémarrez l'add-on."),
+    "badagent": ("Request refused by OpenDNS (client blocked).",
+                 "Requête refusée par OpenDNS (client bloqué)."),
+    "dnserr": ("OpenDNS server error. Will retry at the next check.",
+               "Erreur du serveur OpenDNS. Nouvel essai à la prochaine vérification."),
+    "911": ("OpenDNS server error. Will retry at the next check.",
+            "Erreur du serveur OpenDNS. Nouvel essai à la prochaine vérification."),
+}
+
 
 def log(message):
     print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {message}", flush=True)
@@ -40,18 +67,37 @@ def now_iso():
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
+def network_error_message(err, target):
+    """Message clair pour une erreur réseau : (anglais, français).
+
+    Clear message for a network error: (English, French).
+    """
+    if isinstance(err, requests.Timeout):
+        return (f"{target} did not answer within {HTTP_TIMEOUT} s.",
+                f"{target} n'a pas répondu en moins de {HTTP_TIMEOUT} s.")
+    if isinstance(err, requests.ConnectionError):
+        return (f"Cannot reach {target}. Is the Internet connection down?",
+                f"Impossible de joindre {target}. La connexion Internet est-elle coupée ?")
+    return (f"Network error with {target}: {err}",
+            f"Erreur réseau avec {target} : {err}")
+
+
 def get_public_ip():
+    """Retourne (IP ou None, message en, message fr) / Returns (IP or None, en message, fr message)."""
     try:
         response = requests.get("https://icanhazip.com", timeout=HTTP_TIMEOUT)
         response.raise_for_status()
-        return response.text.strip()
+        return response.text.strip(), None, None
     except requests.RequestException as err:
-        log(f"ERROR: could not get the public IP: {err}")
-        return None
+        en, fr = network_error_message(err, "icanhazip.com")
+        return None, f"Could not determine the public IP. {en}", f"Impossible d'obtenir l'IP publique. {fr}"
 
 
 def update_opendns(username, password, network_label, ip):
-    """Retourne (succès, réponse d'OpenDNS) / Returns (success, OpenDNS response)."""
+    """Retourne (succès, réponse brute, message en, message fr).
+
+    Returns (success, raw response, en message, fr message).
+    """
     try:
         response = requests.get(
             "https://updates.opendns.com/nic/update",
@@ -59,15 +105,22 @@ def update_opendns(username, password, network_label, ip):
             auth=(username, password),
             timeout=HTTP_TIMEOUT,
         )
-        response.raise_for_status()
-        answer = response.text.strip()
-        log(f"OpenDNS response: {answer}")
-        # good / nochg = succès ; badauth, nohost, abuse... = échec
-        # good / nochg = success; badauth, nohost, abuse... = failure
-        return answer.startswith(("good", "nochg")), answer
     except requests.RequestException as err:
-        log(f"ERROR: OpenDNS update failed: {err}")
-        return False, str(err)
+        en, fr = network_error_message(err, "OpenDNS")
+        return False, type(err).__name__, en, fr
+
+    # Pas de raise_for_status() : OpenDNS renvoie « badauth » avec un HTTP 401
+    # No raise_for_status(): OpenDNS sends "badauth" with an HTTP 401
+    answer = response.text.strip()
+    code = answer.split(" ", 1)[0].lower() if answer else ""
+    if response.status_code == 401 and code not in OPENDNS_MESSAGES:
+        code = "badauth"
+    if code in OPENDNS_MESSAGES:
+        en, fr = OPENDNS_MESSAGES[code]
+    else:
+        en = f"Unexpected OpenDNS response (HTTP {response.status_code}): {answer or '(empty)'}"
+        fr = f"Réponse inattendue d'OpenDNS (HTTP {response.status_code}) : {answer or '(vide)'}"
+    return code in ("good", "nochg"), answer or f"HTTP {response.status_code}", en, fr
 
 
 class Publisher:
@@ -164,25 +217,33 @@ def main():
     last_success = 0.0
     attributes = {}
 
+    def report(ok, en, fr):
+        # Journal bilingue + attributs message / message_fr pour les notifications
+        # Bilingual log + message / message_fr attributes for notifications
+        status = STATUS_OK if ok else STATUS_FAILED
+        prefix = "OK" if ok else "ERROR"
+        log(f"{prefix} [{status}] {en}")
+        log(f"{' ' * len(prefix)} [{status}] {fr}")
+        attributes.update(message=en, message_fr=fr, last_check=now_iso())
+        publisher.publish(status, dict(attributes))
+
     while True:
-        ip = get_public_ip()
+        ip, en, fr = get_public_ip()
         if not ip:
-            attributes.update(last_check=now_iso())
-            publisher.publish(STATUS_FAILED, dict(attributes))
+            report(False, en, fr)
         elif ip != last_ip or time.monotonic() - last_success > FORCE_UPDATE_SECONDS:
             # On ne contacte OpenDNS que si l'IP a changé (ou une fois par jour)
             # Only contact OpenDNS when the IP changed (or once a day)
-            log(f"Public IP: {ip}, updating OpenDNS")
-            ok, answer = update_opendns(options["username"], options["password"], options["network_label"], ip)
+            log(f"Public IP {ip}: updating OpenDNS network '{options['network_label']}'")
+            ok, answer, en, fr = update_opendns(options["username"], options["password"], options["network_label"], ip)
             if ok:
                 last_ip = ip
                 last_success = time.monotonic()
-            attributes.update(public_ip=ip, opendns_response=answer, last_update=now_iso(), last_check=now_iso())
-            publisher.publish(STATUS_OK if ok else STATUS_FAILED, dict(attributes))
+            attributes.update(public_ip=ip, opendns_response=answer, last_update=now_iso())
+            report(ok, f"{en} (OpenDNS: {answer})", f"{fr} (OpenDNS : {answer})")
         else:
-            log(f"Public IP unchanged ({ip})")
-            attributes.update(last_check=now_iso())
-            publisher.publish(STATUS_OK, dict(attributes))
+            report(True, f"Public IP unchanged ({ip}), OpenDNS is up to date.",
+                   f"IP publique inchangée ({ip}), OpenDNS est à jour.")
 
         time.sleep(interval)
 
